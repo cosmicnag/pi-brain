@@ -854,6 +854,49 @@ describe("extensionWiring", () => {
     }
   });
 
+  it("should call onUpdate with spawning message before subagent runs", async () => {
+    // Arrange
+    const { projectDir, cleanup } = setupInitializedProject();
+    try {
+      const mockPi = createMockPi();
+      activate(mockPi.api);
+
+      const ctx = createCtx(projectDir);
+
+      const sessionStart = getHandler(mockPi.handlers, "session_start");
+      await sessionStart?.({ type: "session_start" }, ctx);
+
+      const memoryCommit = mockPi.tools.find((t) => t.name === "memory_commit");
+      expect(memoryCommit).toBeDefined();
+
+      const controller = new AbortController();
+      controller.abort();
+
+      const updates: AgentToolResult<unknown>[] = [];
+
+      // Act
+      await memoryCommit?.execute(
+        "tc-commit-update",
+        { summary: "Test commit update" },
+        controller.signal,
+        (partial) => {
+          updates.push(partial);
+        },
+        ctx
+      );
+
+      // Assert — onUpdate should have been called with a spawning message
+      expect(updates.length).toBeGreaterThanOrEqual(1);
+      const firstUpdateText =
+        updates[0]?.content[0]?.type === "text"
+          ? updates[0].content[0].text
+          : "";
+      expect(firstUpdateText).toContain("Spawning");
+    } finally {
+      cleanup();
+    }
+  });
+
   // --- before_agent_start hook ---
 
   it("should inject status into systemPrompt on first before_agent_start", async () => {
