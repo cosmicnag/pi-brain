@@ -185,7 +185,7 @@ export default function activate(pi: ExtensionAPI) {
         })
       ),
     }),
-    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+    async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (
         !tryLoad(ctx) ||
         !isMemoryReady(state, branchManager) ||
@@ -196,6 +196,8 @@ export default function activate(pi: ExtensionAPI) {
       }
 
       const { task } = executeMemoryCommit(params, state, branchManager);
+
+      onUpdate?.(createTextResult("Spawning commit distillation subagent..."));
 
       const result = await spawnCommitter(ctx.cwd, task, signal);
 
@@ -211,6 +213,8 @@ export default function activate(pi: ExtensionAPI) {
           "Commit failed: could not extract commit blocks from subagent response."
         );
       }
+
+      onUpdate?.(createTextResult("Distillation complete, writing commit..."));
 
       const message = finalizeMemoryCommit(
         params.summary,

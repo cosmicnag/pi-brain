@@ -6,7 +6,8 @@ import * as path from "node:path";
 import type { SubagentResult } from "./types.js";
 import { parseYaml } from "./yaml.js";
 
-const COMMITTER_MODEL = "google-antigravity/gemini-3-flash";
+const COMMITTER_MODEL =
+  process.env.PI_BRAIN_COMMIT_MODEL ?? "google-antigravity/gemini-3-flash";
 const COMMITTER_TOOLS = "read,grep,find,ls";
 
 interface AgentDefinition {
